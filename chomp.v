@@ -1,6 +1,7 @@
 Require Import Omega.
 Require Import List.
 Require Import FunctionalExtensionality.
+Require Import Eqdep_dec.
 Require Import RelationClasses.
 
 Record pos :=
@@ -60,12 +61,33 @@ Definition invariant (b:Board) :=
 Inductive State :=
 | mkState : forall (b:Board), invariant b -> State.
 
+Theorem invariant_prop_ext : forall (b:Board)
+    (H1 H2: invariant b),
+    H1 = H2.
+Proof.
+  intros.
+  extensionality p.
+  extensionality Hbp.
+  extensionality p'.
+  extensionality Hle.
+  apply (UIP_dec Bool.bool_dec).
+Qed.
+
 Implicit Type (sigma:State).
 Implicit Type (b:Board).
 Implicit Type (p:pos).
 
 Definition getBoard sigma : Board :=
   let (b, _) := sigma in b.
+
+Theorem State_eq : forall sigma sigma',
+    getBoard sigma = getBoard sigma' ->
+    sigma = sigma'.
+Proof.
+  destruct sigma, sigma'; intros; simpl in *; subst.
+  pose proof (invariant_prop_ext _ i i0); subst.
+  auto.
+Qed.
 
 Definition remove' (b:Board) p : Board :=
   fun p' => if pos_le_dec p p'
